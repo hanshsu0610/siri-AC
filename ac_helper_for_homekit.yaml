@@ -1,0 +1,70 @@
+blueprint:
+  name: '自动调整空调模式'
+  description: '由于homekit自身原因，用siri打开空调后，工作模式默认处于自动，可用此自动调整空调模式'
+  domain: automation
+  input:
+    climate_entity:
+      name: '空调'
+      description: '选择空调实体'
+      selector:
+        entity:
+          domain:
+          - climate
+          multiple: false
+    when_hvac_mode_detected:
+      name: '触发工作模式'
+      description: '选择要更改的工作模式，对于siri控制来说一般选择auto'
+      default: auto
+      selector:
+        select:
+          options:
+          - auto
+          - heat_cool
+          - heat
+          - cool
+          - dry
+          - fan_only
+          custom_value: false
+          sort: false
+          multiple: true
+    condition_selected:
+      name: '选择条件'
+      description: '选择自动化生效的条件，例如季节，日期范围（可使用template实现）等'
+      selector:
+        condition:
+    hvac_mode:
+      name: '目标工作模式'
+      description: '选择更改后的空调工作模式'
+      selector:
+        select:
+          options:
+          - heat
+          - cool
+          custom_value: false
+          sort: false
+          multiple: false
+    temperature:
+      name: '温度'
+      description:  '选择空调目标温度'
+      selector:
+        number:
+          min: 16.0
+          max: 30.0
+          unit_of_measurement: °C
+          mode: slider
+          step: 1.0
+trigger:
+  - platform: state
+    entity_id: !input climate_entity
+    to: !input when_hvac_mode_detected
+
+condition: !input condition_selected
+
+action:
+  - service: climate.set_temperature
+    data:
+      hvac_mode: !input hvac_mode
+      temperature: !input temperature
+    target:
+      entity_id: !input climate_entity
+mode: single
